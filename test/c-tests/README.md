@@ -25,4 +25,4 @@ Uses [Unity](https://github.com/ThrowTheSwitch/Unity) (MIT license, git submodul
 2. Include `#include "unity.h"`
 3. Add `setUp()` and `tearDown()` functions
 4. Register tests in `main()` with `RUN_TEST(test_name)`
-5. Add target to `Makefile`
+5. Run `make test-c` - tests are auto-discovered via `$(wildcard test_*.c)`

@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y \
     libsdl-ttf2.0-dev \
     libsqlite3-dev \
     libgtest-dev \
-    libcmocka-dev \
     cppcheck \
     && rm -rf /var/lib/apt/lists/*
 
@@ -31,4 +30,4 @@ WORKDIR /workspace
 ENV GTEST_INCLUDE_DIR=/usr/src/gtest/include
 
 # Default command: run C integration tests
-CMD ["bash", "-c", "cd test/c-tests && make && make run"]
+CMD ["make", "run-c-tests"]
