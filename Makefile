@@ -308,23 +308,31 @@ C_TEST_LDFLAGS := -lsqlite3
 UNITY_SRC := $(C_TEST_DIR)/unity/src/unity.c
 C_UTIL_SRCS := $(SRC_DIR)/common/utils/str.c $(SRC_DIR)/common/utils/file.c $(SRC_DIR)/common/utils/log.c
 
-# Auto-discover test files
-C_TEST_SRCS := $(wildcard $(C_TEST_DIR)/test_*.c)
-C_TEST_BINARIES := $(C_TEST_SRCS:.c=)
+# Build directory for test binaries
+C_TEST_BUILD_DIR := $(C_TEST_DIR)/build
 
-# Pattern rule: compile any test_*.c to test_* binary
-$(C_TEST_DIR)/test_%: $(C_TEST_DIR)/test_%.c $(UNITY_SRC) $(C_UTIL_SRCS)
-	$(C_TEST_CC) $(C_TEST_CFLAGS) -o $@ $^ $(C_TEST_LDFLAGS)
+# Auto-discover test files and derive binary names
+C_TEST_SRCS := $(wildcard $(C_TEST_DIR)/test_*.c)
+C_TEST_BINARIES := $(patsubst $(C_TEST_DIR)/%.c,$(C_TEST_BUILD_DIR)/%,$(C_TEST_SRCS))
+
+# Ensure build directory exists
+$(C_TEST_BUILD_DIR):
+	mkdir -p $(C_TEST_BUILD_DIR)
+
+# Pattern rule: compile test_*.c to build/test_* binary
+$(C_TEST_BUILD_DIR)/test_%: $(C_TEST_DIR)/test_%.c $(UNITY_SRC) $(C_UTIL_SRCS) | $(C_TEST_BUILD_DIR)
+	$(C_TEST_CC) $(C_TEST_CFLAGS) -o $@ $< $(UNITY_SRC) $(C_UTIL_SRCS) $(C_TEST_LDFLAGS)
 
 c-tests: $(C_TEST_BINARIES)
 
 run-c-tests: c-tests
 	@echo "=== Running C Integration Tests (Unity) ==="
 	@for test in $(C_TEST_BINARIES); do echo ""; $$test || exit 1; done
+	@echo ""
 	@echo "=== All tests passed ==="
 
 clean-c-tests:
-	$(RM) $(C_TEST_BINARIES)
+	$(RM) -r $(C_TEST_BUILD_DIR)
 
 test-c: $(CACHE)/.test-docker
 	docker run --rm -v "$(ROOT_DIR)":/workspace $(TEST_DOCKER_IMAGE) make run-c-tests

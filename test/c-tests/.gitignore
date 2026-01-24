@@ -1,6 +1,2 @@
-# Test binaries (generated)
-test_playActivityDB
-test_batmonDB
-
-# Don't ignore test source files
-!test_*.c
+# Test binaries (output to build/ by Makefile)
+build/

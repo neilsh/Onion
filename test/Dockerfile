@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libsdl-ttf2.0-dev \
     libsqlite3-dev \
     libgtest-dev \
+    libcmocka-dev \
     cppcheck \
     && rm -rf /var/lib/apt/lists/*
 
