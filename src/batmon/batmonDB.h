@@ -1,6 +1,9 @@
 #ifndef BATMON_DB_H
 #define BATMON_DB_H
+
+#ifndef BATTERY_LOG_FILE
 #define BATTERY_LOG_FILE "/mnt/SDCARD/Saves/Common/battery_logs/battery_logs.sqlite"
+#endif
 
 sqlite3 *bat_log_db = NULL;
 

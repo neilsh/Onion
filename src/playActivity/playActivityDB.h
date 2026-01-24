@@ -16,9 +16,16 @@
 
 #include "./cacheDB.h"
 
+// Path macros - use #ifndef to allow test overrides
+#ifndef PLAY_ACTIVITY_DB_NEW_FILE
 #define PLAY_ACTIVITY_DB_NEW_FILE "/mnt/SDCARD/Saves/CurrentProfile/play_activity/play_activity_db.sqlite"
+#endif
+#ifndef ROMS_FOLDER
 #define ROMS_FOLDER "/mnt/SDCARD/Roms"
+#endif
+#ifndef CMD_TO_RUN
 #define CMD_TO_RUN "/mnt/SDCARD/.tmp_update/cmd_to_run.sh"
+#endif
 #define ROM_NOT_FOUND -1
 
 typedef struct ROM ROM;

@@ -10,3 +10,6 @@
 [submodule "third-party/RetroArch-patch"]
 	path = third-party/RetroArch-patch
 	url = https://github.com/OnionUI/RetroArch-patch
+[submodule "test/c-tests/unity"]
+	path = test/c-tests/unity
+	url = https://github.com/ThrowTheSwitch/Unity.git

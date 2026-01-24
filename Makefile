@@ -274,8 +274,64 @@ test: external-libs
 	@cp -R $(TEST_SRC_DIR)/infoPanel_test_data $(BUILD_TEST_DIR)/
 	cd $(BUILD_TEST_DIR) && LD_LIBRARY_PATH=$(ROOT_DIR)/lib/ ./test
 
+# Docker-based test environment (works on macOS/Linux without local gtest)
+TEST_DOCKER_IMAGE := onion-test:latest
+
+$(CACHE)/.test-docker:
+	docker build -t $(TEST_DOCKER_IMAGE) $(TEST_SRC_DIR)
+	$(makedir) cache
+	$(createfile) $(CACHE)/.test-docker
+
+test-docker: $(CACHE)/.test-docker
+	docker run --rm -v "$(ROOT_DIR)":/workspace $(TEST_DOCKER_IMAGE)
+
+test-docker-shell: $(CACHE)/.test-docker
+	docker run -it --rm -v "$(ROOT_DIR)":/workspace $(TEST_DOCKER_IMAGE) bash
+
+#------------------------------------------------------------------------------
+# C Integration Tests (Unity framework)
+#------------------------------------------------------------------------------
+C_TEST_DIR := $(TEST_SRC_DIR)/c-tests
+C_TEST_CC := gcc
+C_TEST_CFLAGS := -Wall -Wextra \
+	-I$(INCLUDE_DIR) \
+	-I$(SRC_DIR)/common \
+	-I$(C_TEST_DIR) \
+	-I$(C_TEST_DIR)/unity/src \
+	-DPLATFORM_LINUX \
+	-DPLAY_ACTIVITY_DB_NEW_FILE='"/tmp/test_play_activity.sqlite"' \
+	-DROMS_FOLDER='"/tmp/test_roms"' \
+	-DCMD_TO_RUN='"/tmp/test_cmd_to_run.sh"' \
+	-DBATTERY_LOG_FILE='"/tmp/test_battery_logs.sqlite"'
+C_TEST_LDFLAGS := -lsqlite3
+
+UNITY_SRC := $(C_TEST_DIR)/unity/src/unity.c
+C_UTIL_SRCS := $(SRC_DIR)/common/utils/str.c $(SRC_DIR)/common/utils/file.c $(SRC_DIR)/common/utils/log.c
+
+# Auto-discover test files
+C_TEST_SRCS := $(wildcard $(C_TEST_DIR)/test_*.c)
+C_TEST_BINARIES := $(C_TEST_SRCS:.c=)
+
+# Pattern rule: compile any test_*.c to test_* binary
+$(C_TEST_DIR)/test_%: $(C_TEST_DIR)/test_%.c $(UNITY_SRC) $(C_UTIL_SRCS)
+	$(C_TEST_CC) $(C_TEST_CFLAGS) -o $@ $^ $(C_TEST_LDFLAGS)
+
+c-tests: $(C_TEST_BINARIES)
+
+run-c-tests: c-tests
+	@echo "=== Running C Integration Tests (Unity) ==="
+	@for test in $(C_TEST_BINARIES); do echo ""; $$test || exit 1; done
+	@echo "=== All tests passed ==="
+
+clean-c-tests:
+	$(RM) $(C_TEST_BINARIES)
+
+test-c: $(CACHE)/.test-docker
+	docker run --rm -v "$(ROOT_DIR)":/workspace $(TEST_DOCKER_IMAGE) make run-c-tests
+
 static-analysis: external-libs
 	@cd $(ROOT_DIR) && cppcheck -I $(INCLUDE_DIR) --enable=all $(SRC_DIR)
 
 format:
 	@find ./src -regex '.*\.\(c\|h\|cpp\|hpp\)' -exec clang-format -style=file -i {} \;
+
